@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="14dp"
+    android:layoutDirection="rtl"
+    android:background="@drawable/fawaid_widget_bg">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🌿 فائدة اليوم"
+        android:textColor="#E2BE55"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:gravity="start" />
+
+    <TextView
+        android:id="@+id/widget_text"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="6dp"
+        android:textColor="#FAF4E4"
+        android:textSize="15sp"
+        android:lineSpacingExtra="4dp"
+        android:ellipsize="end"
+        android:gravity="start|center_vertical"
+        android:textDirection="rtl" />
+
+    <TextView
+        android:id="@+id/widget_source"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="#E2BE55"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:gravity="start"
+        android:textDirection="rtl" />
+</LinearLayout>
