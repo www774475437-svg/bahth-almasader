@@ -1,7 +1,7 @@
 name: turath_finder
 description: "بحث المصادر — ابحث عن نص فيظهر لك الكتاب والجزء والصفحة ورابط مباشر إلى تراث"
 publish_to: 'none'
-version: 1.0.0+1
+version: 5.0.0+7
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -9,8 +9,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   http: ^1.2.2
   url_launcher: ^6.3.0
+  shared_preferences: ^2.3.2
+  google_fonts: ^6.2.1
+  webview_flutter: ^4.10.0
+  share_plus: ^10.1.4
+  path_provider: ^2.1.4
+  pdf: ^3.11.1
+  speech_to_text: ^7.0.0
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+  home_widget: ^0.7.0
+  file_picker: ^8.1.2
+  flutter_tts: ^4.2.0
 
 dev_dependencies:
   flutter_test:
@@ -18,3 +32,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png
+    - assets/uthaymeen.jpg
+    - assets/icons/
+    - assets/fonts/
