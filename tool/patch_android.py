@@ -248,6 +248,78 @@ def enable_desugaring():
         print("desugaring enabled (groovy)")
 
 
+def force_compile_sdk():
+    """compileSdk 36 للتطبيق ولكل المكتبات (بعض المكتبات الحديثة تشترط 36)"""
+    android = os.path.join(ROOT, "android")
+    # 1) التطبيق نفسه: نكتبها مباشرة
+    for name in ("build.gradle.kts", "build.gradle"):
+        app = os.path.join(android, "app", name)
+        if os.path.exists(app):
+            with open(app, encoding="utf-8") as f:
+                g = f.read()
+            g2 = re.sub(r"compileSdk\s*=\s*[^\n]+", "compileSdk = 36", g)
+            g2 = re.sub(r"compileSdkVersion\s+[^\n]+", "compileSdkVersion 36", g2)
+            if "compileSdk" not in g2:
+                g2 = re.sub(r"android\s*\{", "android {\n    compileSdk = 36" if name.endswith("kts") else "android {\n    compileSdkVersion 36", g2, count=1)
+            with open(app, "w", encoding="utf-8") as f:
+                f.write(g2)
+            print("app compileSdk = 36 (" + name + ")")
+    # 2) كل المكتبات
+    kts = os.path.join(android, "build.gradle.kts")
+    groovy = os.path.join(android, "build.gradle")
+    if os.path.exists(kts):
+        with open(kts, encoding="utf-8") as f:
+            g = f.read()
+        if "forceCompileSdk2" not in g:
+            g = re.sub(r"// forceCompileSdk\n.*?\n}\n\n", "", g, flags=re.S)
+            block = """// forceCompileSdk2
+subprojects {
+    afterEvaluate {
+        val ext = extensions.findByName("android")
+        if (ext != null) {
+            var done = false
+            for (m in ext.javaClass.methods) {
+                if (!done && m.name == "compileSdkVersion" && m.parameterTypes.size == 1 &&
+                    (m.parameterTypes[0] == Int::class.javaPrimitiveType || m.parameterTypes[0] == Int::class.javaObjectType)) {
+                    try { m.invoke(ext, 36); done = true } catch (e: Exception) { }
+                }
+            }
+            if (!done) {
+                for (m in ext.javaClass.methods) {
+                    if (!done && m.name == "setCompileSdk" && m.parameterTypes.size == 1) {
+                        try { m.invoke(ext, 36); done = true } catch (e: Exception) { }
+                    }
+                }
+            }
+            println("forceCompileSdk " + project.name + " -> " + done)
+        }
+    }
+}
+
+"""
+            g = block + g
+            with open(kts, "w", encoding="utf-8") as f:
+                f.write(g)
+        print("libraries compileSdk forced (kts)")
+    elif os.path.exists(groovy):
+        with open(groovy, encoding="utf-8") as f:
+            g = f.read()
+        if "forceCompileSdk" not in g:
+            block = """// forceCompileSdk
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android { compileSdkVersion 36 }
+        }
+    }
+}
+
+"""
+            with open(groovy, "w", encoding="utf-8") as f:
+                f.write(block + g)
+        print("libraries compileSdk forced (groovy)")
+
+
 def copy_icons():
     src_root = os.path.join(ROOT, "android_res")
     for d in os.listdir(src_root):
@@ -318,5 +390,6 @@ if __name__ == "__main__":
     write_main_activity()
     write_widget()
     enable_desugaring()
+    force_compile_sdk()
     copy_icons()
     download_font()
