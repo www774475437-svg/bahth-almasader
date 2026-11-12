@@ -1,0 +1,9 @@
+name: Explore Turath
+on:
+  workflow_dispatch:
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tool/explore_turath.py
