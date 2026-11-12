@@ -8,6 +8,7 @@ import '../turath_api.dart';
 import '../widgets/common.dart';
 import '../widgets/hit_card.dart';
 import '../widgets/voice_sheet.dart';
+import 'approved_page.dart';
 import 'dev_picks_page.dart';
 import 'history_page.dart';
 import '../widgets/goal_card.dart';
@@ -71,6 +72,45 @@ class SearchPageState extends State<SearchPage> {
       _message = null;
     });
     showSnack(context, 'سيكون البحث ${s.label}');
+  }
+
+  /// حصر البحث في كتاب واحد أو في كتب عالِم واحد من المعتمدين
+  Future<void> _pickScope() async {
+    final mode = await showModalBottomSheet<int>(
+      context: context,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.menu_book_rounded),
+              title: const Text('البحث في كتاب واحد'),
+              onTap: () => Navigator.pop(c, 0),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_rounded),
+              title: const Text('البحث في كتب عالِم واحد'),
+              onTap: () => Navigator.pop(c, 1),
+            ),
+            if (_scope != null)
+              ListTile(
+                leading: const Icon(Icons.clear_rounded),
+                title: const Text('إلغاء الحصر (كل الكتب المعتمدة)'),
+                onTap: () => Navigator.pop(c, 2),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (mode == null || !mounted) return;
+    if (mode == 2) {
+      setState(() => _scope = null);
+      return;
+    }
+    final s = await Navigator.of(context).push<SearchScope>(
+      MaterialPageRoute(builder: (_) => ScopePickerPage(authors: mode == 1)),
+    );
+    if (s != null && mounted) setScope(s);
   }
 
   Future<void> _voice() async {
@@ -246,7 +286,7 @@ class SearchPageState extends State<SearchPage> {
         children: [
           PageHeader(
             title: kAppName,
-            subtitle: 'الصق النص فيظهر لك مصدره من كتب التراث',
+            subtitle: 'الصق النص فيظهر لك مصدره من الكتب المعتمدة',
             icon: Icons.manage_search_rounded,
             bottomPad: 40,
             trailing: Row(
@@ -366,6 +406,15 @@ class SearchPageState extends State<SearchPage> {
                   ),
                 ),
               ],
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: busy ? null : _pickScope,
+                icon: Icon(Icons.filter_alt_outlined, size: 18, color: accent(context)),
+                label: Text('حصر البحث في كتاب أو عالِم',
+                    style: TextStyle(fontSize: 13, color: accent(context))),
+              ),
             ),
           ],
         ),
@@ -533,7 +582,7 @@ class SearchPageState extends State<SearchPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('لم أجد هذا النص بلفظه في الكتب.', style: TextStyle(fontWeight: FontWeight.bold, color: accent(context))),
+            Text('لم أجد هذا النص بلفظه في الكتب المعتمدة.', style: TextStyle(fontWeight: FontWeight.bold, color: accent(context))),
             const SizedBox(height: 4),
             Text('جرّب جزءًا أقصر منه، أو تأكد من ألفاظه، أو ابحث عنه في جوجل.',
                 style: TextStyle(color: scheme.outline, height: 1.6)),

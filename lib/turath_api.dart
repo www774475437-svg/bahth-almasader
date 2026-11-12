@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'approved.dart';
+
 /// يحوّل نص HTML القادم من تراث إلى نص عادي
 String cleanHtml(String s) {
   return s
@@ -203,13 +205,14 @@ class TurathApi {
     return body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
   }
 
-  /// البحث، ويمكن حصره في كتاب أو مؤلف
+  /// البحث: في الكتب المعتمدة فقط، ويمكن حصره في كتاب أو عالِم منها
   static Future<SearchResult> search(String q, {int page = 1, int? bookId, int? authorId}) async {
+    final authors = authorId != null ? '$authorId' : (bookId == null ? Approved.instance.authorsCsv : '');
     final body = await _get('/search', {
       'q': q,
       if (page > 1) 'page': '$page',
       if (bookId != null) 'book': '$bookId',
-      if (authorId != null) 'author': '$authorId',
+      if (authors.isNotEmpty) 'author': authors,
     });
     final data = (body['data'] as List? ?? [])
         .whereType<Map>()
