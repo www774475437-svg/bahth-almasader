@@ -11,7 +11,6 @@ import '../widgets/common.dart';
 import '../widgets/voice_sheet.dart';
 import 'book_page.dart';
 import 'bookmarks_page.dart';
-import 'library_page.dart';
 import 'page_viewer.dart';
 import 'saved_page.dart';
 import 'search_page.dart';
@@ -78,10 +77,10 @@ class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     final nav = Navigator.of(context);
     nav.popUntil((r) => r.isFirst);
     if (payload == 'saved') {
-      setState(() => _index = 2);
+      setState(() => _index = 1);
     } else if (payload.startsWith('bm:')) {
       final b = Library.instance.bookmarkById(payload.substring(3));
-      setState(() => _index = 3);
+      setState(() => _index = 2);
       if (b != null && b.isSet) {
         nav.push(MaterialPageRoute(builder: (_) => PageViewer(start: b.toHit(), query: '')));
       }
@@ -116,7 +115,7 @@ class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   Future<void> _shortcut(String action) async {
     Navigator.of(context).popUntil((r) => r.isFirst);
     if (action == 'bookmarks') {
-      setState(() => _index = 3);
+      setState(() => _index = 2);
     } else if (action == 'paste') {
       setState(() => _index = 0);
       final data = await Clipboard.getData('text/plain');
@@ -154,7 +153,6 @@ class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         index: _index,
         children: [
           SearchPage(key: searchKey),
-          const LibraryPage(),
           const SavedPage(),
           const BookmarksPage(),
           const SettingsPage(),
@@ -173,11 +171,6 @@ class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
             icon: const Icon(Icons.search_rounded),
             selectedIcon: Icon(Icons.manage_search_rounded, color: accent(context)),
             label: 'بحث',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.local_library_outlined),
-            selectedIcon: Icon(Icons.local_library_rounded, color: accent(context)),
-            label: 'تراث',
           ),
           const NavigationDestination(
             icon: Icon(Icons.star_outline_rounded),

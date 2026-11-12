@@ -66,7 +66,7 @@ class _PageViewerState extends State<PageViewer> {
       Store.instance.addRecentBook(_hit.bookId, _hit.bookName, _hit.authorName);
       _recordProgress(_hit);
     } catch (_) {
-      _error = 'تعذّر تحميل الصفحة. يمكنك فتحها في تراث.';
+      _error = 'تعذّر تحميل الصفحة، تأكد من الإنترنت ثم أعد المحاولة.';
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -284,11 +284,6 @@ class _PageViewerState extends State<PageViewer> {
                 onPressed: _loading ? null : _placeBookmark,
               );
             },
-          ),
-          IconButton(
-            tooltip: 'افتح في تراث',
-            icon: const Icon(Icons.travel_explore_rounded),
-            onPressed: () => openInApp(context, _hit.turathUrl, title: _hit.bookName),
           ),
           PopupMenuButton<String>(
             onSelected: (v) {

@@ -110,7 +110,8 @@ class TextCleaner {
     }
 
     final out = <Passage>[];
-    for (final p in raw) {
+    for (final p0 in raw) {
+      final p = _dropIntro(p0);
       final w = words(p);
       if (w.length >= 2) out.add(Passage(p.trim(), w));
     }
@@ -121,7 +122,59 @@ class TextCleaner {
     return out.take(5).toList();
   }
 
-  /// صيغ البحث بالترتيب: النص كاملًا، ثم مقاطع من 8 كلمات، ثم من 5
+  /// يحذف التقديم قبل النقطتين في أول النص، مثل: «قال ابن عثيمين رحمه الله: …»
+  static String _dropIntro(String p) {
+    final t = p.trim();
+    final m = RegExp(r'^([^:：\n]{1,90})[:：]').firstMatch(t);
+    if (m == null) return t;
+    final rest = t.substring(m.end).trim();
+    if (words(m.group(1)!).length <= 8 && words(rest).length >= 3) return rest;
+    return t;
+  }
+
+  static const _introWords = {'قال', 'وقال', 'يقول', 'ويقول', 'قلت', 'سئل', 'وسئل', 'قاله', 'ذكر', 'وذكر'};
+
+  /// عدد كلمات التقديم في أول النص (قال فلان …) لتجربة البحث بدونها
+  static int _introLen(List<String> w) {
+    if (w.length < 8) return 0;
+    if (!_introWords.contains(normalize(w.first)) && !_introWords.contains(w.first)) return 0;
+    return 4;
+  }
+
+  /// أطول سلسلة كلمات متتالية مشتركة بين النص المبحوث عنه ونص الصفحة
+  static int longestRun(List<String> a, List<String> b) {
+    if (a.isEmpty || b.isEmpty) return 0;
+    final na = a.map(normalize).toList();
+    final nb = b.map(normalize).toList();
+    var prev = List<int>.filled(nb.length + 1, 0);
+    var best = 0;
+    for (var i = 1; i <= na.length; i++) {
+      final cur = List<int>.filled(nb.length + 1, 0);
+      final x = na[i - 1];
+      if (x.isNotEmpty) {
+        for (var j = 1; j <= nb.length; j++) {
+          if (x == nb[j - 1]) {
+            final v = prev[j - 1] + 1;
+            cur[j] = v;
+            if (v > best) best = v;
+          }
+        }
+      }
+      prev = cur;
+    }
+    return best;
+  }
+
+  /// كم كلمة متتالية يجب أن تطابق حتى تُقبل النتيجة
+  static int requiredRun(int n) {
+    if (n <= 5) return n;
+    final r = (n * 0.4).ceil();
+    if (r < 5) return 5;
+    if (r > 15) return 15;
+    return r;
+  }
+
+  /// صيغ البحث بالترتيب: النص كاملًا، ثم بدون التقديم، ثم مقاطع من 10 كلمات، ثم من 6
   static List<String> queries(List<String> w) {
     final out = <String>[];
     void add(List<String> ws) {
@@ -135,11 +188,13 @@ class TextCleaner {
       return w.sublist(s, e);
     }
 
-    if (w.length <= 12) add(w);
-    for (final len in const [8, 5]) {
-      if (w.length > len) {
-        add(win(0, len));
-        add(win((w.length - len) ~/ 2, len));
+    final skip = _introLen(w);
+    if (w.length <= 14) add(w);
+    if (skip > 0 && w.length - skip <= 14) add(w.sublist(skip));
+    for (final len in const [10, 6]) {
+      if (w.length - skip > len) {
+        add(win(skip, len));
+        add(win(skip + (w.length - skip - len) ~/ 2, len));
         add(win(w.length - len, len));
       }
     }

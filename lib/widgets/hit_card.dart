@@ -161,8 +161,6 @@ class HitCard extends StatelessWidget {
           const Divider(height: 14),
           Row(
             children: [
-              _Action(icon: Icons.travel_explore_rounded, label: 'تراث',
-                  onTap: () => openInApp(context, hit.turathUrl, title: hit.bookName)),
               _Action(icon: Icons.auto_stories_rounded, label: 'الصفحة', onTap: () => _openPage(context)),
               _Action(
                 icon: Icons.edit_note_rounded,
@@ -178,14 +176,8 @@ class HitCard extends StatelessWidget {
                 icon: Icon(Icons.more_vert_rounded, color: scheme.outline),
                 onSelected: (v) async {
                   switch (v) {
-                    case 'link':
-                      copyText(context, hit.turathUrl.toString(), 'الرابط');
-                      break;
                     case 'share':
-                      shareText('«${hit.snippet}»\n${hit.sourceLine}\n${hit.turathUrl}');
-                      break;
-                    case 'browser':
-                      openExternal(context, hit.turathUrl);
+                      shareText('«${hit.snippet}»\n${hit.sourceLine}');
                       break;
                     case 'book':
                       Navigator.of(context).push(MaterialPageRoute(
@@ -232,9 +224,7 @@ class HitCard extends StatelessWidget {
                       value: 'fav',
                       child: Text(Store.instance.isFavBook(hit.bookId) ? 'إزالة الكتاب من المفضلة' : 'كتاب مفضل ❤️')),
                   const PopupMenuDivider(),
-                  const PopupMenuItem(value: 'link', child: Text('نسخ الرابط')),
                   const PopupMenuItem(value: 'share', child: Text('مشاركة النص والمصدر')),
-                  const PopupMenuItem(value: 'browser', child: Text('فتح في المتصفح')),
                   if (it != null) ...[
                     const PopupMenuDivider(),
                     const PopupMenuItem(value: 'folder', child: Text('نقل إلى مجلد')),
