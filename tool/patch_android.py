@@ -460,6 +460,30 @@ subprojects {
     print("lint vital disabled")
 
 
+def disable_minify():
+    """إيقاف R8 (تصغير الكود) في نسخة الإصدار: يحذف أحيانًا أجزاء تحتاجها المكتبات فينهار التطبيق عند الفتح"""
+    app = os.path.join(ROOT, "android", "app")
+    kts = os.path.join(app, "build.gradle.kts")
+    groovy = os.path.join(app, "build.gradle")
+    if os.path.exists(kts):
+        with open(kts, encoding="utf-8") as f:
+            g = f.read()
+        if "isMinifyEnabled = false" not in g:
+            g = g.replace('signingConfig = signingConfigs.getByName("debug")',
+                          'signingConfig = signingConfigs.getByName("debug")\n            isMinifyEnabled = false\n            isShrinkResources = false', 1)
+            with open(kts, "w", encoding="utf-8") as f:
+                f.write(g)
+    elif os.path.exists(groovy):
+        with open(groovy, encoding="utf-8") as f:
+            g = f.read()
+        if "minifyEnabled false" not in g:
+            g = g.replace("signingConfig = signingConfigs.debug",
+                          "signingConfig = signingConfigs.debug\n            minifyEnabled false\n            shrinkResources false", 1)
+            with open(groovy, "w", encoding="utf-8") as f:
+                f.write(g)
+    print("minify disabled")
+
+
 if __name__ == "__main__":
     patch_manifest()
     add_icon_aliases()
@@ -469,5 +493,6 @@ if __name__ == "__main__":
     force_compile_sdk()
     add_proguard_rules()
     disable_lint_vital()
+    disable_minify()
     copy_icons()
     download_font()
