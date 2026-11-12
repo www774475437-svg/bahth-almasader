@@ -427,6 +427,39 @@ def download_font():
     raise SystemExit("could not download Amiri font")
 
 
+def disable_lint_vital():
+    """فحص lint لنسخة الإصدار ينهار مع بعض المكتبات (url_launcher)، فنوقفه — لا يؤثر على التطبيق"""
+    android = os.path.join(ROOT, "android")
+    kts = os.path.join(android, "build.gradle.kts")
+    groovy = os.path.join(android, "build.gradle")
+    if os.path.exists(kts):
+        path, block = kts, """
+// disableLintVital
+subprojects {
+    tasks.configureEach {
+        if (name.startsWith("lintVital")) enabled = false
+    }
+}
+"""
+    elif os.path.exists(groovy):
+        path, block = groovy, """
+// disableLintVital
+subprojects {
+    tasks.configureEach { t ->
+        if (t.name.startsWith("lintVital")) t.enabled = false
+    }
+}
+"""
+    else:
+        return
+    with open(path, encoding="utf-8") as f:
+        g = f.read()
+    if "disableLintVital" not in g:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(block)
+    print("lint vital disabled")
+
+
 if __name__ == "__main__":
     patch_manifest()
     add_icon_aliases()
@@ -435,5 +468,6 @@ if __name__ == "__main__":
     enable_desugaring()
     force_compile_sdk()
     add_proguard_rules()
+    disable_lint_vital()
     copy_icons()
     download_font()
