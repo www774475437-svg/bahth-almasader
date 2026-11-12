@@ -1,7 +1,7 @@
 name: turath_finder
 description: "بحث المصادر — ابحث عن نص فيظهر لك الكتاب والجزء والصفحة ورابط مباشر إلى تراث"
 publish_to: 'none'
-version: 5.0.4+11
+version: 5.0.5+12
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

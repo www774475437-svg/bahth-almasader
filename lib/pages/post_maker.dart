@@ -26,7 +26,6 @@ class _PostMakerState extends State<PostMaker> {
   PostFormat _format = PostFormat.telegram;
   bool _rahimahu = true;
   bool _noTashkeel = false;
-  bool _addLink = false;
   bool _sending = false;
   late String _mark = Settings.instance.closingMark;
 
@@ -74,7 +73,6 @@ class _PostMakerState extends State<PostMaker> {
         b.write('\n${h.sourceLine}');
         break;
     }
-    if (_addLink) b.write('\n${h.turathUrl}');
     return b.toString();
   }
 
@@ -185,12 +183,6 @@ class _PostMakerState extends State<PostMaker> {
                   value: _noTashkeel,
                   onChanged: (v) => setState(() => _noTashkeel = v),
                   title: const Text('حذف التشكيل من النص'),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _addLink,
-                  onChanged: (v) => setState(() => _addLink = v),
-                  title: const Text('إضافة رابط الصفحة في تراث'),
                 ),
               ],
             ),

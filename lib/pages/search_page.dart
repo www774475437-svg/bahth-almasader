@@ -143,20 +143,56 @@ class SearchPageState extends State<SearchPage> {
     setState(() => _clipboardOffer = text);
   }
 
+  /// يبحث ثم يتحقق من كل نتيجة: لا يقبل إلا ما وُجد فيه النص (أو أكثره) كلماتٍ متتالية
   Future<void> _searchGroup(_Group g, int gen) async {
     try {
-      for (final q in TextCleaner.queries(g.passage.words)) {
+      final words = g.passage.words;
+      final need = TextCleaner.requiredRun(words.length);
+      final cands = <String, Hit>{};
+      final foundBy = <String, String>{};
+      var tried = 0;
+      for (final q in TextCleaner.queries(words)) {
+        if (tried >= 5) break;
+        tried++;
         final r = await TurathApi.search(q, bookId: _scope?.bookId, authorId: _scope?.authorId);
         if (gen != _gen) return;
-        if (r.hits.isNotEmpty) {
-          g.query = q;
-          g.count = r.count;
-          g.hits = r.hits;
-          break;
+        for (final h in r.hits) {
+          cands.putIfAbsent(h.key, () => h);
+          foundBy.putIfAbsent(h.key, () => q);
         }
+        final strong = r.hits.where((h) => TextCleaner.longestRun(words, TextCleaner.words(h.snippet)) >= need);
+        if (strong.length >= 3) break;
       }
+
+      final list = cands.values.take(30).toList();
+      final score = <String, int>{};
+      for (var i = 0; i < list.length; i += 6) {
+        final batch = list.sublist(i, i + 6 > list.length ? list.length : i + 6);
+        await Future.wait(batch.map((h) async {
+          var s = TextCleaner.longestRun(words, TextCleaner.words(h.snippet));
+          if (s < need) {
+            try {
+              final page = await TurathApi.getPage(h.bookId, h.pageId);
+              final s2 = TextCleaner.longestRun(words, TextCleaner.words(page.text));
+              if (s2 > s) s = s2;
+            } catch (_) {}
+          }
+          score[h.key] = s;
+        }));
+        if (gen != _gen) return;
+      }
+
+      final order = {for (var k = 0; k < list.length; k++) list[k].key: k};
+      final good = list.where((h) => (score[h.key] ?? 0) >= need).toList()
+        ..sort((a, b) {
+          final c = (score[b.key] ?? 0).compareTo(score[a.key] ?? 0);
+          return c != 0 ? c : order[a.key]!.compareTo(order[b.key]!);
+        });
+      g.hits = good;
+      g.count = good.length;
+      g.query = good.isEmpty ? null : foundBy[good.first.key];
     } catch (_) {
-      g.error = 'تعذّر الاتصال بتراث، تأكد من الإنترنت ثم أعد المحاولة.';
+      g.error = 'تعذّر الاتصال بالمكتبة، تأكد من الإنترنت ثم أعد المحاولة.';
     }
     if (gen != _gen || !mounted) return;
     setState(() => g.loading = false);
@@ -216,12 +252,6 @@ class SearchPageState extends State<SearchPage> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  tooltip: 'اقتراحات المطوّر',
-                  icon: const Icon(Icons.auto_awesome_rounded, color: kGold),
-                  onPressed: () =>
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DevPicksPage())),
-                ),
                 IconButton(
                   tooltip: 'السجل',
                   icon: const Icon(Icons.history_rounded, color: Colors.white),
@@ -393,7 +423,7 @@ class SearchPageState extends State<SearchPage> {
           ),
         );
     return [
-      const SectionLabel('اقتراحات المطوّر', icon: Icons.auto_awesome_rounded),
+      const SectionLabel('اقتراحات المطوّر', icon: Icons.menu_book_rounded),
       const UthaymeenBanner(height: 130),
       const SectionLabel('وِرد القراءة', icon: Icons.local_fire_department_rounded),
       const GoalCard(),
@@ -408,7 +438,7 @@ class SearchPageState extends State<SearchPage> {
             tip(Icons.auto_fix_high_rounded, 'ينقّح النص: يحذف التشكيل والإيموجي والرموز وسطر العنوان والمصدر.'),
             tip(Icons.format_quote_rounded, 'إن كان في النص كلام بين «» يبحث عنه وحده.'),
             tip(Icons.call_split_rounded, 'نصّان أو أكثر بينها سطر فارغ؟ يبحث عن كل نص وحده.'),
-            tip(Icons.content_cut_rounded, 'إن لم يجد النص كاملًا يبحث بأجزاء منه حتى يجده.'),
+            tip(Icons.content_cut_rounded, 'لا يعرض إلا الكتب التي فيها النص أو أكثره بلفظه متتابعًا، لا كلمات متفرقة.'),
             tip(Icons.ios_share_rounded, 'من تيليجرام أو واتساب: «مشاركة» ← «بحث المصادر» فيبحث فورًا.'),
             tip(Icons.edit_note_rounded, 'زر «منشور» يجهّز النص بتنسيق تيليجرام أو واتساب أو صورة.'),
             tip(Icons.mic_rounded, 'زر الميكروفون: اقرأ النص بصوتك فيبحث عنه.'),
@@ -503,7 +533,7 @@ class SearchPageState extends State<SearchPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('لم أجد هذا النص في كتب تراث.', style: TextStyle(fontWeight: FontWeight.bold, color: accent(context))),
+            Text('لم أجد هذا النص بلفظه في الكتب.', style: TextStyle(fontWeight: FontWeight.bold, color: accent(context))),
             const SizedBox(height: 4),
             Text('جرّب جزءًا أقصر منه، أو تأكد من ألفاظه، أو ابحث عنه في جوجل.',
                 style: TextStyle(color: scheme.outline, height: 1.6)),

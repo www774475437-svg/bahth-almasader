@@ -24,7 +24,6 @@ String savedAsText(List<SavedItem> items) {
     if (s.hit.authorName.isNotEmpty) b.writeln('المؤلف: ${s.hit.authorName}');
     if (s.folder.isNotEmpty) b.writeln('المجلد: ${s.folder}');
     if (s.note.isNotEmpty) b.writeln('ملاحظة: ${s.note}');
-    b.writeln(s.hit.turathUrl.toString());
     b.writeln('—————');
   }
   return b.toString();

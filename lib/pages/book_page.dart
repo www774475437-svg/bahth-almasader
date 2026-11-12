@@ -97,12 +97,6 @@ class _BookPageState extends State<BookPage> {
               );
             },
           ),
-          IconButton(
-            tooltip: 'افتح في تراث',
-            icon: const Icon(Icons.travel_explore_rounded),
-            onPressed: () => openInApp(context, Uri.parse('https://app.turath.io/book/${widget.bookId}'),
-                title: widget.name),
-          ),
         ],
       ),
       body: ListView.builder(
