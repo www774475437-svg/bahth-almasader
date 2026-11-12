@@ -1,13 +1,17 @@
 name: Explore Turath
 on:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   explore:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: python3 tool/explore_turath.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: catalog
-          path: catalog.json
+      - run: |
+          mkdir -p tool/data && mv catalog.json tool/data/catalog.json
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add tool/data/catalog.json
+          git commit -m "Update catalogue" && git push
