@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'approved.dart';
 import 'config.dart';
 import 'daily.dart';
 import 'library.dart';
@@ -15,6 +16,7 @@ import 'widgets/common.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Settings.instance.load();
+  await Approved.instance.load();
   await Store.instance.load();
   await Library.instance.load();
   await Reading.instance.load();
