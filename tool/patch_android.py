@@ -97,6 +97,11 @@ def patch_manifest():
         else:
             m = m.replace("</manifest>", "    <queries>\n        " + speech_query + "\n    </queries>\n</manifest>", 1)
 
+    m = m.replace('android:name="${applicationName}"', 'android:name=".CrashApp"', 1)
+    if "EnableImpeller" not in m:
+        m = m.replace("</application>", """    <meta-data android:name="io.flutter.embedding.android.EnableImpeller" android:value="false"/>
+    </application>""", 1)
+
     with open(MANIFEST, "w", encoding="utf-8") as f:
         f.write(m)
     print("manifest patched")
@@ -121,6 +126,10 @@ def write_main_activity():
     with open(target, "w", encoding="utf-8") as f:
         f.write(code)
     print("MainActivity written:", pkg)
+    with open(os.path.join(ROOT, "tool", "CrashApp.kt"), encoding="utf-8") as f:
+        crash = f.read().replace("__PACKAGE__", pkg)
+    with open(os.path.join(os.path.dirname(target), "CrashApp.kt"), "w", encoding="utf-8") as f:
+        f.write(crash)
     add_shortcuts(pkg)
 
 
@@ -320,6 +329,40 @@ subprojects {
         print("libraries compileSdk forced (groovy)")
 
 
+def add_proguard_rules():
+    """قواعد R8 لنسخة الإصدار (مكتبة الإشعارات تستخدم Gson)"""
+    app = os.path.join(ROOT, "android", "app")
+    with open(os.path.join(app, "proguard-rules.pro"), "w", encoding="utf-8") as f:
+        f.write("""-keep class com.dexterous.** { *; }
+-keep class com.google.gson.** { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep public class * implements java.lang.reflect.Type
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn com.google.gson.**
+""")
+    kts = os.path.join(app, "build.gradle.kts")
+    groovy = os.path.join(app, "build.gradle")
+    if os.path.exists(kts):
+        with open(kts, encoding="utf-8") as f:
+            g = f.read()
+        if "proguard-rules.pro" not in g:
+            g = g.replace('signingConfig = signingConfigs.getByName("debug")',
+                          'signingConfig = signingConfigs.getByName("debug")\n            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")', 1)
+            with open(kts, "w", encoding="utf-8") as f:
+                f.write(g)
+    elif os.path.exists(groovy):
+        with open(groovy, encoding="utf-8") as f:
+            g = f.read()
+        if "proguard-rules.pro" not in g:
+            g = g.replace("signingConfig = signingConfigs.debug",
+                          "signingConfig = signingConfigs.debug\n            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'", 1)
+            with open(groovy, "w", encoding="utf-8") as f:
+                f.write(g)
+    print("proguard rules added")
+
+
+
 def copy_icons():
     src_root = os.path.join(ROOT, "android_res")
     for d in os.listdir(src_root):
@@ -351,7 +394,7 @@ def copy_icons():
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background"/>
     <item>
-        <bitmap android:gravity="center" android:src="@mipmap/ic_launcher"/>
+        <bitmap android:gravity="center" android:src="@mipmap/ic_launcher_foreground"/>
     </item>
 </layer-list>
 """
@@ -391,5 +434,6 @@ if __name__ == "__main__":
     write_widget()
     enable_desugaring()
     force_compile_sdk()
+    add_proguard_rules()
     copy_icons()
     download_font()
