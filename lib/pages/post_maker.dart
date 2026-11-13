@@ -58,7 +58,7 @@ class _PostMakerState extends State<PostMaker> {
     final b = StringBuffer();
     switch (_format) {
       case PostFormat.telegram:
-        if (_title.text.trim().isNotEmpty) b.write('📜 ${_title.text.trim()}\n\n');
+        if (_title.text.trim().isNotEmpty) b.write('🔖 ${_title.text.trim()}\n\n');
         if (_intro.isNotEmpty) b.write('▪ $_intro\n\n');
         b.write(quote);
         b.write('\n\n> [📓${h.bookName} (صـ ${h.volPage})]');
