@@ -484,6 +484,48 @@ def disable_minify():
     print("minify disabled")
 
 
+def sign_release():
+    """توقيع نسخة المتجر بمفتاح خاص إن وُجد android/key.properties (يُكتب من أسرار GitHub)"""
+    props = os.path.join(ROOT, "android", "key.properties")
+    kts = os.path.join(ROOT, "android", "app", "build.gradle.kts")
+    if not os.path.exists(props) or not os.path.exists(kts):
+        print("release signing: debug key (no upload key)")
+        return
+    with open(kts, encoding="utf-8") as f:
+        g = f.read()
+    if "keystoreProperties" in g:
+        return
+    head = """
+val keystoreProperties = java.util.Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+}
+
+"""
+    cfg = """    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+
+"""
+    i = g.find("android {")
+    j = g.find("    buildTypes {")
+    if i < 0 or j < 0:
+        print("release signing: could not patch gradle file")
+        return
+    g = g[:i] + head + g[i:j] + cfg + g[j:]
+    g = g.replace('signingConfig = signingConfigs.getByName("debug")',
+                  'signingConfig = signingConfigs.getByName("release")')
+    with open(kts, "w", encoding="utf-8") as f:
+        f.write(g)
+    print("release signing: upload key")
+
+
 if __name__ == "__main__":
     patch_manifest()
     add_icon_aliases()
@@ -494,5 +536,6 @@ if __name__ == "__main__":
     add_proguard_rules()
     disable_lint_vital()
     disable_minify()
+    sign_release()
     copy_icons()
     download_font()
