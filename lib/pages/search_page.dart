@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../config.dart';
+import '../daily_benefit.dart';
+import '../reading.dart';
 import '../storage.dart';
 import '../text_cleaner.dart';
 import '../turath_api.dart';
@@ -9,6 +11,7 @@ import '../widgets/common.dart';
 import '../widgets/hit_card.dart';
 import '../widgets/voice_sheet.dart';
 import 'approved_page.dart';
+import 'book_page.dart';
 import 'dev_picks_page.dart';
 import 'history_page.dart';
 import '../widgets/goal_card.dart';
@@ -111,6 +114,43 @@ class SearchPageState extends State<SearchPage> {
       MaterialPageRoute(builder: (_) => ScopePickerPage(authors: mode == 1)),
     );
     if (s != null && mounted) setScope(s);
+  }
+
+  /// يعيد رسم الصفحة الرئيسية (عند وصول فائدة اليوم)
+  void refreshIdle() {
+    if (mounted) setState(() {});
+  }
+
+  Widget _continueCard(BuildContext context) {
+    final r = Store.instance.recentBooks.first;
+    final pr = Reading.instance.of(r.id);
+    final sub = [
+      if (r.author.isNotEmpty) r.author,
+      if (pr != null && pr.total > 0) 'قرأت ${pr.percent}٪',
+    ].join('  •  ');
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: () => Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => BookPage(bookId: r.id, name: r.name, author: r.author)))
+          .then((_) => refreshIdle()),
+      child: Row(
+        children: [
+          Icon(Icons.auto_stories_rounded, color: accent(context), size: 30),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(r.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.5)),
+                if (sub.isNotEmpty)
+                  Text(sub, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_left_rounded),
+        ],
+      ),
+    );
   }
 
   Future<void> _voice() async {
@@ -471,13 +511,22 @@ class SearchPageState extends State<SearchPage> {
             ],
           ),
         );
+    final benefit = DailyBenefit.today();
     return [
+      if (Store.instance.recentBooks.isNotEmpty) ...[
+        const SectionLabel('تابع القراءة', icon: Icons.auto_stories_rounded),
+        _continueCard(context),
+      ],
+      if (benefit != null) ...[
+        const SectionLabel('فائدة اليوم', icon: Icons.wb_sunny_rounded),
+        HitCard(hit: benefit, query: ''),
+      ],
       const SectionLabel('اقتراحات المطوّر', icon: Icons.menu_book_rounded),
       const UthaymeenBanner(height: 130),
       const SectionLabel('وِرد القراءة', icon: Icons.local_fire_department_rounded),
       const GoalCard(),
       if (pick != null) ...[
-        const SectionLabel('فائدة اليوم من محفوظاتك', icon: Icons.wb_sunny_rounded),
+        const SectionLabel('من محفوظاتك', icon: Icons.star_rounded),
         HitCard(hit: pick.hit, query: '', item: pick),
       ],
       const SectionLabel('كيف يعمل؟', icon: Icons.lightbulb_rounded),

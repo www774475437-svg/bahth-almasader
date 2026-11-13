@@ -6,6 +6,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'daily_benefit.dart';
 import 'settings.dart';
 import 'storage.dart';
 
@@ -104,11 +105,11 @@ class Daily {
 
   static Future<void> _updateWidget() async {
     try {
-      final pick = Store.instance.dailyPick();
+      final hit = DailyBenefit.today() ?? Store.instance.dailyPick()?.hit;
       await HomeWidget.saveWidgetData<String>(
-          'fawaid_text', pick == null ? 'احفظ الفوائد بالنجمة ⭐ لتظهر هنا كل يوم' : '«${short(pick.hit.snippet, 220)}»');
+          'fawaid_text', hit == null ? 'افتح التطبيق لتظهر فائدة اليوم هنا' : '«${short(hit.snippet, 220)}»');
       await HomeWidget.saveWidgetData<String>(
-          'fawaid_source', pick == null ? 'بحث المصادر' : '📓 ${pick.hit.bookName} (صـ ${pick.hit.volPage})');
+          'fawaid_source', hit == null ? 'بحث المصادر' : '📓 ${hit.bookName} (صـ ${hit.volPage})');
       await HomeWidget.updateWidget(androidName: 'FawaidWidgetProvider');
     } catch (_) {}
   }
@@ -119,7 +120,7 @@ class Daily {
       await cancelRange(100, 7);
       final s = Settings.instance;
       final saved = Store.instance.saved;
-      if (!s.dailyNotify || saved.isEmpty) return;
+      if (!s.dailyNotify) return;
 
       final rnd = Random();
       final now = DateTime.now();
@@ -127,11 +128,13 @@ class Daily {
       if (!first.isAfter(now)) first = first.add(const Duration(days: 1));
 
       for (var i = 0; i < 7; i++) {
-        final item = saved[rnd.nextInt(saved.length)];
         final when = DateTime(first.year, first.month, first.day + i, s.notifyHour);
-        final body = '«${short(item.hit.snippet, 300)}»\n📓 ${item.hit.bookName} (صـ ${item.hit.volPage})';
+        final approved = DailyBenefit.forDay(when);
+        if (approved == null && saved.isEmpty) continue;
+        final hit = approved ?? saved[rnd.nextInt(saved.length)].hit;
+        final body = '«${short(hit.snippet, 300)}»\n📓 ${hit.bookName} (صـ ${hit.volPage})';
         await scheduleAt(100 + i, 'فائدة اليوم 🌿', body, when,
-            channelId: 'daily_fawaid', channelName: 'فائدة اليوم', payload: 'saved');
+            channelId: 'daily_fawaid', channelName: 'فائدة اليوم', payload: approved == null ? 'saved' : 'daily');
       }
     } catch (_) {}
   }

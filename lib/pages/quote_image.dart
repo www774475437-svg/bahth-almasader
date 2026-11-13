@@ -189,8 +189,18 @@ class _QuoteImagePageState extends State<QuoteImagePage> {
               ),
               if (_watermark) ...[
                 const SizedBox(height: 10),
-                Text(kAppName,
-                    style: TextStyle(fontSize: 10, color: t.text.withValues(alpha: 0.45))),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset('assets/icon.png', width: 22, height: 22),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(kAppName,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: t.text.withValues(alpha: 0.7))),
+                  ],
+                ),
               ],
             ],
           ),
@@ -268,7 +278,7 @@ class _QuoteImagePageState extends State<QuoteImagePage> {
                   contentPadding: EdgeInsets.zero,
                   value: _watermark,
                   onChanged: (v) => setState(() => _watermark = v),
-                  title: const Text('اسم التطبيق أسفل الصورة'),
+                  title: const Text('شعار التطبيق واسمه أسفل الصورة'),
                 ),
               ],
             ),

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'approved.dart';
 import 'config.dart';
 import 'daily.dart';
+import 'daily_benefit.dart';
 import 'library.dart';
 import 'reading.dart';
 import 'nav.dart';
@@ -21,8 +22,15 @@ Future<void> main() async {
   await Library.instance.load();
   await Reading.instance.load();
   await Daily.init();
+  await DailyBenefit.load();
   Store.instance.onSavedChanged = () => Daily.refresh();
   Daily.refresh();
+  DailyBenefit.ensure().then((changed) {
+    if (changed) {
+      Daily.refresh();
+      searchKey.currentState?.refreshIdle();
+    }
+  });
   Library.instance.rescheduleAll();
   runApp(const TurathFinderApp());
 }

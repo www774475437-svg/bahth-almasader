@@ -77,7 +77,9 @@ class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     if (!mounted) return;
     final nav = Navigator.of(context);
     nav.popUntil((r) => r.isFirst);
-    if (payload == 'saved') {
+    if (payload == 'daily') {
+      setState(() => _index = 0);
+    } else if (payload == 'saved') {
       setState(() => _index = 2);
     } else if (payload.startsWith('bm:')) {
       final b = Library.instance.bookmarkById(payload.substring(3));
