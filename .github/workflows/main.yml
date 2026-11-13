@@ -22,6 +22,20 @@ jobs:
       - name: Create Android project files
         run: flutter create --platforms=android --org com.fawaid --project-name turath_finder .
 
+      - name: Upload key (only if the secrets exist)
+        id: key
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASS" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/app/upload.jks
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=upload\nstoreFile=upload.jks\n' "$KEYSTORE_PASS" "$KEYSTORE_PASS" > android/key.properties
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Prepare Android (name, icon, sharing, font)
         run: python3 tool/patch_android.py
 
@@ -32,3 +46,13 @@ jobs:
         with:
           name: turath-finder-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Store bundle (AAB)
+        if: steps.key.outputs.signed == 'true'
+        run: flutter build appbundle --release
+
+      - uses: actions/upload-artifact@v4
+        if: steps.key.outputs.signed == 'true'
+        with:
+          name: store-bundle-aab
+          path: build/app/outputs/bundle/release/app-release.aab
