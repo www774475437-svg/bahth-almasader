@@ -11,6 +11,9 @@ import '../widgets/common.dart';
 import '../widgets/hit_card.dart';
 import '../widgets/voice_sheet.dart';
 import 'approved_page.dart';
+import 'assistant_page.dart';
+import 'memorize_page.dart';
+import 'study_path_page.dart';
 import 'book_page.dart';
 import 'dev_picks_page.dart';
 import 'history_page.dart';
@@ -150,6 +153,29 @@ class SearchPageState extends State<SearchPage> {
           const Icon(Icons.chevron_left_rounded),
         ],
       ),
+    );
+  }
+
+  Widget _quickRow(BuildContext context) {
+    Widget item(IconData i, String t, Widget page) => Expanded(
+          child: AppCard(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page)),
+            child: Column(children: [
+              Icon(i, color: accent(context), size: 28),
+              const SizedBox(height: 6),
+              Text(t, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            ]),
+          ),
+        );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(children: [
+        item(Icons.auto_awesome_motion_rounded, 'المساعد الذكي', const AssistantPage()),
+        item(Icons.school_rounded, 'ابدأ هنا', const StudyPathPage()),
+        item(Icons.psychology_rounded, 'حفظ المتون', const MemorizePage()),
+      ]),
     );
   }
 
@@ -513,6 +539,7 @@ class SearchPageState extends State<SearchPage> {
         );
     final benefit = DailyBenefit.today();
     return [
+      _quickRow(context),
       if (Store.instance.recentBooks.isNotEmpty) ...[
         const SectionLabel('تابع القراءة', icon: Icons.auto_stories_rounded),
         _continueCard(context),

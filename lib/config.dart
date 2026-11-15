@@ -2,7 +2,7 @@
 
 const kAppName = 'بحث المصادر';
 const kDeveloper = 'أبو عبد الرحمن الأثري';
-const kVersion = '5.2.0';
+const kVersion = '5.3.0';
 
 /// رابط التواصل مع المطوّر
 const kTelegramUrl = 'https://t.me/alhsaar4';
